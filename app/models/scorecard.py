@@ -1,5 +1,14 @@
 from pydantic import BaseModel
 from typing import Optional, List
+from enum import Enum
+
+
+class GameMode(str, Enum):
+    bogey_golf = "Bogey Golf"
+    break_100 = "Break 100"
+    par_90 = "Par 90"
+    double_bogey_golf = "Double Bogey Golf"
+    standard = "Standard"
 
 
 class HoleScore(BaseModel):
@@ -7,10 +16,13 @@ class HoleScore(BaseModel):
     par: int
     yardage: int
     handicap: Optional[int]
-    strokes: Optional[int] = None
+    score: Optional[int] = None
+    penalties: Optional[int] = None
+    putts: Optional[int] = None
 
 
 class Scorecard(BaseModel):
+    scorecard_id: int
     player_name: str
     # guest_1: Optional[str]
     # guest_2: Optional[str]
@@ -19,3 +31,4 @@ class Scorecard(BaseModel):
     course_name: str
     tee_name: str
     holes: List[HoleScore]
+    mode: Optional[GameMode] = None
