@@ -28,6 +28,20 @@ def get_course_details(course_name: str) -> CourseSearchResponse:
     )
 
 
+def get_course_by_id(course_id: int) -> Course:
+    url = str(URL) + "courses/" + str(course_id)
+    headers = {"Authorization": f"Key {API_KEY}"}
+    response = httpx.get(url=url, headers=headers)
+    response.raise_for_status()
+    data = response.json()
+
+    normalised_course = normalise_course_data(data["course"])
+
+    course = Course.parse_obj(normalised_course)
+
+    return course
+
+
 def normalise_course_data(raw_course: dict) -> dict:
     tees = []
     for gender, tee_list in raw_course.get("tees", {}).items():
