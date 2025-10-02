@@ -1,5 +1,3 @@
-import uuid
-
 from app.models.scorecard import Scorecard, HoleScore, GameMode
 from app.services.courses import get_course_by_id
 
@@ -44,10 +42,7 @@ def create_scorecard(
         for hole in holes:
             hole.par += 2
 
-    scorecard_id = str(uuid.uuid4())
-
     scorecard = Scorecard(
-        scorecard_id=scorecard_id,
         player_name=player_name,
         course_id=course_id,
         course_name=course.club_name,
@@ -59,4 +54,4 @@ def create_scorecard(
     return scorecard
 
 
-# def update_scorecard(scorecard_id: int, hole_number: int, score:int, penalties:int, putts:int):
+# def update_scorecard(scorecard_id: int, hole_number: int, strokes:int, penalties:int, putts:int):
