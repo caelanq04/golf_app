@@ -1,8 +1,19 @@
 from fastapi import APIRouter, HTTPException
 
-from app.models.scorecard import Scorecard, GameMode, HoleScore, ScoreSummary
+from app.models.scorecard import (
+    Scorecard,
+    GameMode,
+    HoleScore,
+    ScoreSummary,
+    ScorecardFinishedResponse,
+)
 from app.services.scorecard import create_scorecard, calculate_totals
-from app.db.scorecards_repo import insert_scorecard, update_scorecard, get_scorecard
+from app.db.scorecards_repo import (
+    insert_scorecard,
+    update_scorecard,
+    get_scorecard,
+    finish_scorecard,
+)
 
 router = APIRouter()
 
@@ -38,3 +49,10 @@ def fetch_scorecard(scorecard_id: int):
 def get_summary(scorecard_id: int):
     scorecard = fetch_scorecard(scorecard_id)
     return calculate_totals(scorecard)
+
+
+@router.put("/{scorecard_id}/complete", response_model=ScorecardFinishedResponse)
+def finish_round(scorecard_id: int):
+    scorecard = finish_scorecard(scorecard_id)
+    summary = get_summary(scorecard_id)
+    return ScorecardFinishedResponse(scorecard=scorecard, summary=summary)

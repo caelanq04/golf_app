@@ -49,3 +49,8 @@ class ScoreSummary(BaseModel):
     # gir_percentage: Optional[int] = None
     # fairways_hit_percentage: Optional[int] = None
     # putts_per_hole_avg: Optional[float] = None
+
+
+class ScorecardFinishedResponse(BaseModel):
+    scorecard: Scorecard
+    summary: ScoreSummary

@@ -108,3 +108,25 @@ def update_scorecard(
             penalties=updated_row["penalties"],
             putts=updated_row["putts"],
         )
+
+
+def finish_scorecard(scorecard_id: int):
+    with get_connection() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            UPDATE scorecards
+                SET finished = TRUE
+            WHERE id=%s
+            RETURNING *
+            ;
+            """,
+            (scorecard_id,),
+        )
+        scorecard = cur.fetchone()
+
+        if not scorecard:
+            raise HTTPException(404, detail="Scorecard not found")
+        conn.commit()
+
+        return get_scorecard(scorecard_id)
