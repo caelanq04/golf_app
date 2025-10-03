@@ -1,10 +1,23 @@
+from uuid import UUID
+
 from app.models.scorecard import Scorecard, HoleScore, GameMode, ScoreSummary
 from app.services.courses import get_course_by_id
+from app.db.connection import get_connection
 
 
 def create_scorecard(
-    player_name: str, course_id: int, tee_name: str, mode: str | None
+    user_id: UUID | None,
+    guest_name: str | None,
+    course_id: int,
+    tee_name: str,
+    mode: str | None,
 ) -> Scorecard:
+    if not user_id and not guest_name:
+        raise ValueError("Must provide either a user_id or guest_name")
+
+    if user_id and guest_name:
+        raise ValueError("Cannot provide both user_id and guest_name")
+
     course = get_course_by_id(course_id)
     tee = None
     holes = []
@@ -43,7 +56,8 @@ def create_scorecard(
             hole.par += 2
 
     scorecard = Scorecard(
-        player_name=player_name,
+        user_id=user_id,
+        guest_name=guest_name,
         course_id=course_id,
         course_name=course.club_name,
         tee_name=tee_name,
@@ -83,9 +97,20 @@ def calculate_totals(scorecard: Scorecard) -> ScoreSummary:
 
     total_par = in_par + out_par
 
+    if scorecard.user_id:
+        with get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT username FROM users WHERE id =%s;", (scorecard.user_id,)
+            )
+            username = cur.fetchone()[0]
+        name = username
+    else:
+        name = scorecard.guest_name
+
     return ScoreSummary(
         scorecard_id=scorecard.scorecard_id,
-        player_name=scorecard.player_name,
+        name=name,
         in_par=in_par,
         out_par=out_par,
         total_par=total_par,

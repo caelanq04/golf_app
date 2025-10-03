@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from uuid import UUID
 
 from app.models.scorecard import (
     Scorecard,
@@ -18,11 +19,20 @@ from app.db.scorecards_repo import (
 router = APIRouter()
 
 
-@router.get("/{player_name}/{course_id}/{tee_name}/{mode}", response_model=Scorecard)
+@router.get("/{course_id}/{tee_name}/{mode}", response_model=Scorecard)
 def create_new_scorecard(
-    player_name: str, course_id: int, tee_name: str, mode: GameMode
+    course_id: int,
+    tee_name: str,
+    mode: GameMode,
+    user_id: UUID | None,
+    guest_name: str | None,
 ):
-    partial_scorecard = create_scorecard(player_name, course_id, tee_name, mode)
+    if not user_id and not guest_name:
+        raise ValueError("Must provide either a user_id or guest_name")
+
+    if user_id and guest_name:
+        raise ValueError("Cannot provide both user_id and guest_name")
+    partial_scorecard = create_scorecard(user_id, guest_name, course_id, tee_name, mode)
     scorecard_id = insert_scorecard(partial_scorecard)
     return get_scorecard(scorecard_id)
 

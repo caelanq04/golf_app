@@ -10,13 +10,14 @@ def insert_scorecard(scorecard: Scorecard) -> int:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute(
             """
-            INSERT INTO scorecards (player_name, course_id, course_name, tee_name, mode)
-            VALUES (%s, %s, %s, %s, %s) 
+            INSERT INTO scorecards (user_id, guest_name, course_id, course_name, tee_name, mode)
+            VALUES (%s, %s, %s, %s, %s, %s) 
             RETURNING id
             ;
             """,
             (
-                scorecard.player_name,
+                scorecard.user_id,
+                scorecard.guest_name,
                 scorecard.course_id,
                 scorecard.course_name,
                 scorecard.tee_name,
@@ -68,7 +69,8 @@ def get_scorecard(scorecard_id: int) -> Scorecard:
 
         scorecard = Scorecard(
             scorecard_id=scorecard_data["id"],
-            player_name=scorecard_data["player_name"],
+            user_id=scorecard_data["user_id"],
+            guest_name=scorecard_data["guest_name"],
             course_id=scorecard_data["course_id"],
             course_name=scorecard_data["course_name"],
             tee_name=scorecard_data["tee_name"],

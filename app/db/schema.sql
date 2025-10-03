@@ -1,6 +1,17 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp"
+
+CREATE TABLE IF NOT EXISTS users(
+	id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+	username TEXT UNIQUE NOT NULL,
+	email TEXT UNIQUE NOT NULL,
+	hashed_password TEXT UNIQUE,
+	created_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS scorecards (
 	id SERIAL PRIMARY KEY,
-	player_name TEXT NOT NULL,
+	user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+	guest_name TEXT,
 	course_id INT NOT NULL,
 	course_name TEXT NOT NULL,
 	tee_name TEXT NOT NULL,
@@ -24,12 +35,3 @@ CREATE TABLE IF NOT EXISTS hole_scores(
 
 CREATE INDEX IF NOT EXISTS idx_hole_scores_scorecard ON hole_scores(scorecard_id);
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp"
-
-CREATE TABLE IF NOT EXISTS users(
-	id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-	username TEXT UNIQUE NOT NULL,
-	email TEXT UNIQUE NOT NULL,
-	hashed_password TEXT UNIQUE,
-	created_at TIMESTAMP DEFAULT NOW()
-);

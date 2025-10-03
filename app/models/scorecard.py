@@ -1,3 +1,4 @@
+from uuid import UUID
 from pydantic import BaseModel
 from typing import Optional, List
 from enum import Enum
@@ -23,7 +24,8 @@ class HoleScore(BaseModel):
 
 class Scorecard(BaseModel):
     scorecard_id: Optional[int] = None
-    player_name: str
+    user_id: Optional[UUID] = None
+    guest_name: Optional[str] = None
     # guest_1: Optional[str]
     # guest_2: Optional[str]
     # guest_3: Optional[str]
@@ -36,7 +38,7 @@ class Scorecard(BaseModel):
 
 class ScoreSummary(BaseModel):
     scorecard_id: int
-    player_name: str
+    name: Optional[str] = None
     in_par: Optional[int] = None
     out_par: Optional[int] = None
     total_par: Optional[int] = None

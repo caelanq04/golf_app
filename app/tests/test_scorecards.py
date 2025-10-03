@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+from uuid import uuid4
 from app.main import app
 
 client = TestClient(app)
@@ -7,19 +8,20 @@ client = TestClient(app)
 
 @pytest.fixture
 def new_scorecard():
-    player_name = "test_player"
+    user_id = uuid4()
     course_id = 9833
     tee_name = "White 2019"
     mode = "Standard"
 
-    response = client.get(f"/scorecard/{player_name}/{course_id}/{tee_name}/{mode}")
+    response = client.get(f"/scorecard/{user_id}/{course_id}/{tee_name}/{mode}")
     assert response.status_code == 200
-    return response.json()
+    return response.json(), user_id
 
 
 def test_create_scorecard(new_scorecard):
+    scorecard, user_id = new_scorecard
     assert "scorecard_id" in new_scorecard
-    assert new_scorecard["player_name"] == "test_player"
+    assert new_scorecard["user_id"] == user_id
     assert isinstance(new_scorecard["holes"], list)
     assert len(new_scorecard["holes"]) > 0
 
