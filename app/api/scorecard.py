@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
-from app.models.scorecard import Scorecard, GameMode, HoleScore
-from app.services.scorecard import create_scorecard
+from app.models.scorecard import Scorecard, GameMode, HoleScore, ScoreSummary
+from app.services.scorecard import create_scorecard, calculate_totals
 from app.db.scorecards_repo import insert_scorecard, update_scorecard, get_scorecard
 
 router = APIRouter()
@@ -32,3 +32,9 @@ def fetch_scorecard(scorecard_id: int):
     if not scorecard:
         raise HTTPException(404, detail="Scorecard not found")
     return scorecard
+
+
+@router.get("/{scorecard_id}/summary", response_model=ScoreSummary)
+def get_summary(scorecard_id: int):
+    scorecard = fetch_scorecard(scorecard_id)
+    return calculate_totals(scorecard)

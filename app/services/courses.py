@@ -24,7 +24,7 @@ def get_course_details(course_name: str) -> CourseSearchResponse:
     normalised_courses = [normalise_course_data(c) for c in data["courses"]]
 
     return CourseSearchResponse(
-        courses=[Course.parse_obj(c) for c in normalised_courses]
+        courses=[Course.model_validate(c) for c in normalised_courses]
     )
 
 
@@ -37,7 +37,7 @@ def get_course_by_id(course_id: int) -> Course:
 
     normalised_course = normalise_course_data(data["course"])
 
-    course = Course.parse_obj(normalised_course)
+    course = Course.model_validate(normalised_course)
 
     return course
 

@@ -50,7 +50,7 @@ def get_scorecard(scorecard_id: int) -> Scorecard:
             (scorecard_id,),
         )
         holes_data = cur.fetchall()
-        holes = [HoleScore.parse_obj(hole) for hole in holes_data]
+        holes = [HoleScore.model_validate(hole) for hole in holes_data]
 
         cur.execute(
             """
