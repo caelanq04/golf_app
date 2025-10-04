@@ -3,6 +3,7 @@ from uuid import UUID
 from app.models.scorecard import Scorecard, HoleScore, GameMode, ScoreSummary
 from app.services.courses import get_course_by_id
 from app.db.connection import get_connection
+from app.db.users_repo import get_user_by_id
 
 
 def create_scorecard(
@@ -69,25 +70,11 @@ def create_scorecard(
 
 
 def calculate_totals(scorecard: Scorecard) -> ScoreSummary:
-    in_par = 0
-    out_par = 0
-    in_score = 0
-    out_score = 0
-    total_score = 0
-    to_par_in_score = 0
-    to_par_out_score = 0
-    to_par_total_score = 0
+    out_par = in_par = out_score = in_score = total_score = 0
+    to_par_out_score = to_par_in_score = to_par_total_score = 0
 
     for h in scorecard.holes:
         if h.hole_number <= 9:
-            in_par += h.par
-            if h.strokes is not None:
-                in_score += h.strokes
-                to_par_in_score += h.strokes - h.par
-                total_score += h.strokes
-                to_par_total_score += h.strokes - h.par
-
-        else:
             out_par += h.par
             if h.strokes is not None:
                 out_score += h.strokes
@@ -95,29 +82,28 @@ def calculate_totals(scorecard: Scorecard) -> ScoreSummary:
                 total_score += h.strokes
                 to_par_total_score += h.strokes - h.par
 
+        else:
+            in_par += h.par
+            if h.strokes is not None:
+                in_score += h.strokes
+                to_par_in_score += h.strokes - h.par
+                total_score += h.strokes
+                to_par_total_score += h.strokes - h.par
+
     total_par = in_par + out_par
 
-    if scorecard.user_id:
-        with get_connection() as conn:
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT username FROM users WHERE id =%s;", (scorecard.user_id,)
-            )
-            username = cur.fetchone()[0]
-        name = username
-    else:
-        name = scorecard.guest_name
+    name = get_user_by_id(scorecard.user_id) or scorecard.guest_name
 
     return ScoreSummary(
         scorecard_id=scorecard.scorecard_id,
         name=name,
-        in_par=in_par,
         out_par=out_par,
+        in_par=in_par,
         total_par=total_par,
-        in_score=in_score,
         out_score=out_score,
+        in_score=in_score,
         total_score=total_score,
-        to_par_in_score=to_par_in_score,
         to_par_out_score=to_par_out_score,
+        to_par_in_score=to_par_in_score,
         to_par_total_score=to_par_total_score,
     )

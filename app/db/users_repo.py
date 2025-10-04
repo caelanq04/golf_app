@@ -1,9 +1,11 @@
+from uuid import UUID
 from fastapi import HTTPException
 from psycopg2.extras import RealDictCursor
 import bcrypt
+from typing import Optional, Tuple
 
 from .connection import get_connection
-from app.models.users import User
+from app.models.users import User, UserInDB
 
 
 def create_user(username: str, email: str, password: str) -> User:
@@ -39,7 +41,19 @@ def create_user(username: str, email: str, password: str) -> User:
         return User(id=user["id"], username=user["username"], email=user["email"])
 
 
-def fetch_user(username: str | None, email: str | None) -> User:
+def get_user_by_id(user_id: UUID) -> str:
+    if user_id is None:
+        return None
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users WHERE id =%s;", (str(user_id),))
+        result = cur.fetchone()
+        return result[0] if result else None
+
+
+def fetch_user(
+    username: str | None, email: str | None
+) -> Tuple[Optional[User], Optional[UserInDB]]:
     if username is None and email is None:
         raise ValueError("Must provide username or email")
     if username and email:
@@ -57,4 +71,9 @@ def fetch_user(username: str | None, email: str | None) -> User:
             (username, email),
         )
         user = cur.fetchone()
-        return User(id=user["id"], username=user["username"], email=user["email"])
+        if not user:
+            return None, None
+
+        return User(
+            id=user["id"], username=user["username"], email=user["email"]
+        ), UserInDB(hashed_password=user["hashed_password"])

@@ -5,8 +5,15 @@ from dotenv import load_dotenv
 import psycopg2
 # from psycopg2.extras import RealDictCursor
 
+ENV = os.environ.get("ENV", "dev")
+
 dotenv_path = join(dirname(__file__), "../../.env")
-load_dotenv(dotenv_path)
+test_dotenv_path = join(dirname(__file__), "../../.env.test")
+
+if ENV == "test":
+    load_dotenv(test_dotenv_path)
+else:
+    load_dotenv(dotenv_path)
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 

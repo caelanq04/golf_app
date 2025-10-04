@@ -24,19 +24,19 @@ def login(username: str | None, email: str | None, password: str) -> User:
     if username and email:
         raise ValueError("Can only provide either username or email")
 
-    user = fetch_user(username=username, email=email)
+    user, user_in_db = fetch_user(username=username, email=email)
 
     if not user:
         raise HTTPException(status_code=401, detail="Incorrect username or password")
 
     if not bcrypt.checkpw(
-        password.encode("utf-8"), user["hashed_password"].encode("utf-8")
+        password.encode("utf-8"), user_in_db.hashed_password.encode("utf-8")
     ):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
     return User.model_validate(user)
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None):
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta

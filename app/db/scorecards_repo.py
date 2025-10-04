@@ -10,18 +10,19 @@ def insert_scorecard(scorecard: Scorecard) -> int:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute(
             """
-            INSERT INTO scorecards (user_id, guest_name, course_id, course_name, tee_name, mode)
-            VALUES (%s, %s, %s, %s, %s, %s) 
+            INSERT INTO scorecards (user_id, guest_name, course_id, course_name, tee_name, mode, finished)
+            VALUES (%s, %s, %s, %s, %s, %s, %s) 
             RETURNING id
             ;
             """,
             (
-                scorecard.user_id,
+                str(scorecard.user_id) if scorecard.user_id else None,
                 scorecard.guest_name,
                 scorecard.course_id,
                 scorecard.course_name,
                 scorecard.tee_name,
                 scorecard.mode,
+                scorecard.finished,
             ),
         )
         scorecard_id = cur.fetchone()["id"]
@@ -76,6 +77,7 @@ def get_scorecard(scorecard_id: int) -> Scorecard:
             tee_name=scorecard_data["tee_name"],
             holes=holes,
             mode=scorecard_data["mode"],
+            finished=scorecard_data["finished"],
         )
         return scorecard
 
@@ -118,7 +120,7 @@ def finish_scorecard(scorecard_id: int):
         cur.execute(
             """
             UPDATE scorecards
-                SET finished = TRUE
+                SET finished = True
             WHERE id=%s
             RETURNING *
             ;

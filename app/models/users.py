@@ -24,3 +24,7 @@ class LoginRequest(BaseModel):
     username: Optional[str]
     email: Optional[str]
     password: str
+
+
+class UserInDB(BaseModel):
+    hashed_password: str

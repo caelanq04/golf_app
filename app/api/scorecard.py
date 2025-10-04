@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from uuid import UUID
+from typing import Optional
 
 from app.models.scorecard import (
     Scorecard,
@@ -24,8 +25,8 @@ def create_new_scorecard(
     course_id: int,
     tee_name: str,
     mode: GameMode,
-    user_id: UUID | None,
-    guest_name: str | None,
+    user_id: Optional[UUID] = Query(default=None),
+    guest_name: Optional[str] = Query(default=None),
 ):
     if not user_id and not guest_name:
         raise ValueError("Must provide either a user_id or guest_name")

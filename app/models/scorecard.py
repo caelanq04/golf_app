@@ -34,19 +34,20 @@ class Scorecard(BaseModel):
     tee_name: str
     holes: List[HoleScore]
     mode: GameMode = GameMode.standard
+    finished: bool = False
 
 
 class ScoreSummary(BaseModel):
     scorecard_id: int
     name: Optional[str] = None
-    in_par: Optional[int] = None
     out_par: Optional[int] = None
+    in_par: Optional[int] = None
     total_par: Optional[int] = None
-    in_score: Optional[int] = None
     out_score: Optional[int] = None
+    in_score: Optional[int] = None
     total_score: Optional[int] = None
-    to_par_in_score: Optional[int] = None
     to_par_out_score: Optional[int] = None
+    to_par_in_score: Optional[int] = None
     to_par_total_score: Optional[int] = None
     # gir_percentage: Optional[int] = None
     # fairways_hit_percentage: Optional[int] = None
