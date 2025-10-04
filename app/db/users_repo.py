@@ -45,10 +45,14 @@ def get_user_by_id(user_id: UUID) -> str:
     if user_id is None:
         return None
     with get_connection() as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT username FROM users WHERE id =%s;", (str(user_id),))
-        result = cur.fetchone()
-        return result[0] if result else None
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            "SELECT id, username, email FROM users WHERE id =%s;", (str(user_id),)
+        )
+        user = cur.fetchone()
+        if user:
+            return User(id=user["id"], username=user["username"], email=user["email"])
+        return None
 
 
 def fetch_user(

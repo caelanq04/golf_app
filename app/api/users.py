@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.models.users import UserCreate, User, LoginRequest, Token
 from app.db.users_repo import create_user
-from app.services.users import login_user
+from app.services.users import login_for_access_token
 
 router = APIRouter()
 
@@ -18,4 +18,4 @@ def register_user(user_data: UserCreate):
 
 @router.post("/login", response_model=Token, tags=["auth"])
 def login(login_request: LoginRequest):
-    return login_user(**login_request.model_dump())
+    return login_for_access_token(**login_request.model_dump())

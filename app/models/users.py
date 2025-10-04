@@ -20,6 +20,10 @@ class Token(BaseModel):
     token_type: str
 
 
+class TokenData(BaseModel):
+    user_id: str | None = None
+
+
 class LoginRequest(BaseModel):
     username: Optional[str]
     email: Optional[str]

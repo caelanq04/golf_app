@@ -92,7 +92,11 @@ def calculate_totals(scorecard: Scorecard) -> ScoreSummary:
 
     total_par = in_par + out_par
 
-    name = get_user_by_id(scorecard.user_id) or scorecard.guest_name
+    user = get_user_by_id(scorecard.user_id)
+    if user is not None:
+        name = user.username
+    else:
+        name = scorecard.guest_name
 
     return ScoreSummary(
         scorecard_id=scorecard.scorecard_id,
