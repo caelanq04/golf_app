@@ -1,4 +1,5 @@
 import pytest
+from uuid import uuid4
 from fastapi.testclient import TestClient
 from app.main import app
 from app.db.users_repo import create_user
@@ -7,37 +8,61 @@ client = TestClient(app)
 
 
 @pytest.fixture
-def new_scorecard():
-    user = create_user(
-        username="testuser", email="testuser@example.com", password="password123"
-    )
-
-    course_id = 9833
-    tee_name = "White 2019"
-    mode = "Standard"
-
-    response = client.get(
-        f"/scorecard/{course_id}/{tee_name}/{mode}", params={"user_id": str(user.id)}
-    )
-    print(response.json())
+def registered_user():
+    username = "testuser"
+    email = "testuser@example.com"
+    password = "password123"
+    user_data = {"username": username, "email": email, "password": password}
+    response = client.post("/users", json=user_data)
     assert response.status_code == 200
-    data = response.json()
-    return data, user.id
+    user = response.json()
+
+    login_resp = client.post(
+        "/login", json={"username": None, "email": email, "password": password}
+    )
+    assert login_resp.status_code == 200
+    token = login_resp.json()["access_token"]
+    return {"user": user, "token": token}
+
+
+@pytest.fixture
+def new_scorecard(registered_user):
+    # user = registered_user["user"]
+    token = registered_user["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = client.get("/scorecard/9833/White 2019/Standard", headers=headers)
+    assert response.status_code == 200
+    return response.json(), headers
+
+
+def test_create_scorecard_authenticated(registered_user):
+    token = registered_user["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = client.get("/scorecard/9833/White 2019/Standard", headers=headers)
+    assert response.status_code == 200
+    scorecard = response.json()
+    assert scorecard["user_id"] == registered_user["user"]["id"]
+    assert scorecard["guest_name"] is None
 
 
 def test_create_scorecard(new_scorecard):
-    scorecard, user_id = new_scorecard
+    scorecard, headers = new_scorecard
     assert "scorecard_id" in scorecard
-    assert scorecard["user_id"] == str(user_id)
     assert isinstance(scorecard["holes"], list)
     assert len(scorecard["holes"]) > 0
 
+    assert scorecard["user_id"] is not None
+    assert scorecard["guest_name"] is None
+
 
 def test_update_hole(new_scorecard):
-    scorecard, user_id = new_scorecard
+    scorecard, headers = new_scorecard
     scorecard_id = scorecard["scorecard_id"]
     response = client.put(
-        f"/scorecard/update/scorecard_id/{scorecard_id}/hole/1/strokes/4/penalties/1/putts/2"
+        f"/scorecard/update/scorecard_id/{scorecard_id}/hole/1/strokes/4/penalties/1/putts/2",
+        headers=headers,
     )
     assert response.status_code == 200
     hole = response.json()
@@ -56,13 +81,14 @@ def test_update_hole(new_scorecard):
 
 
 def test_calculate_totals(new_scorecard):
-    scorecard, user_id = new_scorecard
+    scorecard, headers = new_scorecard
     scorecard_id = scorecard["scorecard_id"]
     for hole in range(1, 19):
         client.put(
-            f"/scorecard/update/scorecard_id/{scorecard_id}/hole/{hole}/strokes/4/penalties/1/putts/2"
+            f"/scorecard/update/scorecard_id/{scorecard_id}/hole/{hole}/strokes/4/penalties/1/putts/2",
+            headers=headers,
         )
-    fetch_resp = client.get(f"/scorecard/{scorecard_id}/summary")
+    fetch_resp = client.get(f"/scorecard/{scorecard_id}/summary", headers=headers)
     assert fetch_resp.status_code == 200
     summary = fetch_resp.json()
     assert summary["out_par"] == 33
@@ -77,9 +103,9 @@ def test_calculate_totals(new_scorecard):
 
 
 def test_finish_hole(new_scorecard):
-    scorecard, user_id = new_scorecard
+    scorecard, headers = new_scorecard
     scorecard_id = scorecard["scorecard_id"]
-    response = client.put(f"/scorecard/{scorecard_id}/complete")
+    response = client.put(f"/scorecard/{scorecard_id}/complete", headers=headers)
     assert response.status_code == 200
     data = response.json()
     scorecard = data["scorecard"]

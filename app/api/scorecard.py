@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends, Security
+from fastapi.security import OAuth2PasswordBearer
 from uuid import UUID
 from typing import Optional
 
@@ -9,7 +10,9 @@ from app.models.scorecard import (
     ScoreSummary,
     ScorecardFinishedResponse,
 )
+from app.models.users import User
 from app.services.scorecard import create_scorecard, calculate_totals
+from app.services.users import get_current_user
 from app.db.scorecards_repo import (
     insert_scorecard,
     update_scorecard,
@@ -17,6 +20,7 @@ from app.db.scorecards_repo import (
     finish_scorecard,
 )
 
+ouath2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 router = APIRouter()
 
 
@@ -25,14 +29,26 @@ def create_new_scorecard(
     course_id: int,
     tee_name: str,
     mode: GameMode,
-    user_id: Optional[UUID] = Query(default=None),
+    token: Optional[str] = Security(ouath2_scheme),
     guest_name: Optional[str] = Query(default=None),
 ):
+    user = None
+    if token:
+        try:
+            user = get_current_user(token)
+        except HTTPException:
+            user = None
+
+    if user:
+        user_id = user.id
+        guest_name = None
+    else:
+        user_id = None
+        guest_name = guest_name
+
     if not user_id and not guest_name:
         raise ValueError("Must provide either a user_id or guest_name")
 
-    if user_id and guest_name:
-        raise ValueError("Cannot provide both user_id and guest_name")
     partial_scorecard = create_scorecard(user_id, guest_name, course_id, tee_name, mode)
     scorecard_id = insert_scorecard(partial_scorecard)
     return get_scorecard(scorecard_id)
