@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from psycopg2.extras import RealDictCursor
 import bcrypt
 
@@ -35,4 +36,25 @@ def create_user(username: str, email: str, password: str) -> User:
             user = cur.fetchone()
             conn.commit()
 
+        return User(id=user["id"], username=user["username"], email=user["email"])
+
+
+def fetch_user(username: str | None, email: str | None) -> User:
+    if username is None and email is None:
+        raise ValueError("Must provide username or email")
+    if username and email:
+        raise ValueError("Can only provide either username or email")
+    with get_connection() as conn:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE username=%s
+            OR email=%s
+            ;
+            """,
+            (username, email),
+        )
+        user = cur.fetchone()
         return User(id=user["id"], username=user["username"], email=user["email"])
